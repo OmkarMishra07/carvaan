@@ -6,6 +6,7 @@ import {
   Download, ListMusic, Flame, Award, Globe, Sparkles, CheckCircle2,
   FolderOpen
 } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // Fallback songs to ensure the app is fully functional even if the external API is offline or rate-limited.
 const FALLBACK_SONGS = [
@@ -1373,6 +1374,9 @@ export default function App() {
           </div>
         ))}
       </div>
+
+      {/* Vercel Speed Insights */}
+      <SpeedInsights />
 
     </div>
   );
