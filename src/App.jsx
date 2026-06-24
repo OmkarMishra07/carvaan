@@ -662,6 +662,19 @@ export default function App() {
     }
   };
 
+  const handleAudioEnded = () => {
+    if (repeat === 'one') {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(err => console.warn(err));
+      }
+    } else if (repeat === 'all' && currentIndex === queue.length - 1) {
+      loadSongAtIndex(queue, 0, true);
+    } else {
+      handleNext();
+    }
+  };
+
   const handlePrev = () => {
     if (isInJamRoom && jamRoomData && currentUser) {
       const isHost = jamRoomData.hostUid === currentUser.uid;
