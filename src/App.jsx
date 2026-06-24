@@ -581,16 +581,38 @@ export default function App() {
   // ----------------------------------------------------
   // INTERACTIVE WORKFLOW HANDLERS
   // ----------------------------------------------------
-  const loadSongAtIndex = (songList, index, autoPlay = true) => {
+  const loadSongAtIndex = async (songList, index, autoPlay = true) => {
     if (!songList || songList.length === 0) return;
     const targetIdx = (index + songList.length) % songList.length;
-    const song = songList[targetIdx];
+    let song = songList[targetIdx];
     
     if (tuneModeActive) {
       if (vocalRemoverRef.current) {
         vocalRemoverRef.current.setTuneMode(false);
       }
       setTuneModeActive(false);
+    }
+
+    // Resolve audio url dynamically if missing (e.g. liked songs, or expired CDN URLs)
+    const hasAudio = song.audioUrl || (song.downloadUrl && song.downloadUrl.length > 0);
+    if (!hasAudio && song.id) {
+      try {
+        const res = await fetch(`https://jiosavnapi-production.up.railway.app/api/songs/${song.id}`);
+        const json = await res.json();
+        const apiSong = json.data?.[0] || json.data?.results?.[0];
+        if (apiSong) {
+          song = {
+            ...song,
+            ...apiSong,
+            name: apiSong.name || apiSong.title,
+            artist: apiSong.artists?.primary?.[0]?.name || apiSong.artist || 'Unknown Artist'
+          };
+          // Cache the resolved URL back in the queue list
+          songList[targetIdx] = song;
+        }
+      } catch (err) {
+        console.warn("Failed resolving song details in loadSongAtIndex:", err);
+      }
     }
 
     const payloadUrl = audioQuality === 'high' 
@@ -612,7 +634,16 @@ export default function App() {
     setIsPlaying(autoPlay);
   };
 
-  const handlePlaySong = async (song, idx) => {
+  const handlePlaySong = async (song, idx, customList = null) => {
+    const activeList = customList || songs;
+    const normalizedList = activeList.map(s => ({
+      ...s,
+      name: s.name || s.title,
+      artist: s.artists?.primary?.[0]?.name || s.artist || s.primaryArtists || 'Unknown Artist'
+    }));
+
+    let targetSong = normalizedList[idx] || song;
+
     if (isInJamRoom && jamRoomData && currentUser) {
       const isHost = jamRoomData.hostUid === currentUser.uid;
       if (!isHost) {
@@ -623,20 +654,20 @@ export default function App() {
         try {
           const res = await fetch(`https://jiosavnapi-production.up.railway.app/api/songs/${song.id}`);
           const json = await res.json();
-          const targetSong = json.data?.[0] || json.data?.results?.[0] || song;
+          const fetchedSong = json.data?.[0] || json.data?.results?.[0] || targetSong;
           const downloadUrl = audioQuality === 'high'
-            ? targetSong.downloadUrl?.[4]?.url || targetSong.downloadUrl?.[0]?.url || song.audioUrl || ''
-            : targetSong.downloadUrl?.[2]?.url || targetSong.downloadUrl?.[0]?.url || song.audioUrl || '';
+            ? fetchedSong.downloadUrl?.[4]?.url || fetchedSong.downloadUrl?.[0]?.url || targetSong.audioUrl || ''
+            : fetchedSong.downloadUrl?.[2]?.url || fetchedSong.downloadUrl?.[0]?.url || targetSong.audioUrl || '';
           
           const payload = {
-            id: song.id,
-            name: song.name || song.title,
-            artist: targetSong.artists?.primary?.[0]?.name || song.artists?.primary?.[0]?.name || song.artist || 'Unknown Artist',
-            image: song.image?.[2]?.url || song.image?.[1]?.url || song.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500',
+            id: targetSong.id,
+            name: fetchedSong.name || fetchedSong.title || targetSong.name,
+            artist: fetchedSong.artists?.primary?.[0]?.name || fetchedSong.artist || targetSong.artist || 'Unknown Artist',
+            image: fetchedSong.image?.[2]?.url || fetchedSong.image?.[1]?.url || fetchedSong.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500',
             audioUrl: downloadUrl,
-            hasLyrics: targetSong.hasLyrics || song.hasLyrics || false,
-            lyricsId: targetSong.lyricsId || song.lyricsId || null,
-            artists: targetSong.artists || song.artists || null
+            hasLyrics: fetchedSong.hasLyrics || targetSong.hasLyrics || false,
+            lyricsId: fetchedSong.lyricsId || targetSong.lyricsId || null,
+            artists: fetchedSong.artists || targetSong.artists || null
           };
           
           await JamRoomService.updateSong(jamRoomCode, payload);
@@ -644,16 +675,16 @@ export default function App() {
           setIsPlaying(true);
         } catch (e) {
           console.warn("Failed resolving track, playing standard:", e);
-          await JamRoomService.updateSong(jamRoomCode, song);
-          loadSongAtIndex(songs, idx, true);
+          await JamRoomService.updateSong(jamRoomCode, targetSong);
+          await loadSongAtIndex(normalizedList, idx, true);
         }
         return;
       }
     }
 
-    setQueue(songs);
-    loadSongAtIndex(songs, idx, true);
-    addToast(`Playing: ${song.name || song.title}`, 'success');
+    setQueue(normalizedList);
+    await loadSongAtIndex(normalizedList, idx, true);
+    addToast(`Playing: ${targetSong.name || targetSong.title}`, 'success');
   };
 
   const togglePlay = () => {
@@ -1533,7 +1564,7 @@ export default function App() {
                         return (
                           <div
                             key={song.id}
-                            onClick={() => handlePlaySong(song, idx)}
+                            onClick={() => handlePlaySong(song, idx, songs)}
                             className={`playlist-row flex items-center justify-between p-2 bg-[#E8E8E8] border border-[#C0C0C0] rounded cursor-pointer transition-all hover:bg-[#E2E2E2] ${
                               isCurrent ? 'border-[#111111] bg-[#D8D8D8]' : ''
                             }`}
@@ -1624,7 +1655,7 @@ export default function App() {
                     {songs.map((song, idx) => (
                       <div
                         key={song.id}
-                        onClick={() => handlePlaySong(song, idx)}
+                        onClick={() => handlePlaySong(song, idx, songs)}
                         className={`playlist-row flex justify-between p-2 bg-[#E8E8E8] border border-[#C0C0C0] rounded cursor-pointer ${
                           currentSong?.id === song.id ? 'border-[#111111] bg-[#D8D8D8]' : ''
                         }`}
@@ -1654,7 +1685,7 @@ export default function App() {
                       {likedSongsData.map((song, idx) => (
                         <div
                           key={song.id}
-                          onClick={() => handlePlaySong({ ...song, name: song.title, artist: song.primaryArtists }, idx)}
+                          onClick={() => handlePlaySong({ ...song, name: song.title, artist: song.primaryArtists }, idx, likedSongsData)}
                           className="playlist-row flex justify-between p-2 bg-[#E8E8E8] border border-[#C0C0C0] rounded cursor-pointer"
                         >
                           <div className="flex items-center gap-3">
@@ -1683,7 +1714,7 @@ export default function App() {
                     {queue.map((song, idx) => (
                       <div
                         key={song.id}
-                        onClick={() => handlePlaySong(song, idx)}
+                        onClick={() => handlePlaySong(song, idx, queue)}
                         className={`playlist-row flex justify-between p-2 bg-[#E8E8E8] border border-[#C0C0C0] rounded cursor-pointer ${
                           currentIndex === idx ? 'border-[#111111] bg-[#D8D8D8]' : ''
                         }`}
