@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User profile and sub-collections rule configuration
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Liked songs collection: users can only manage their own favorites list
+      match /liked_songs/{songId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Playlists collection: users can only manage their own playlists
+      match /playlists/{playlistId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Downloaded songs records: users can only manage their own cache records
+      match /downloaded_songs/{songId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}

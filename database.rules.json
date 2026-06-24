@@ -1,0 +1,31 @@
+{
+  "rules": {
+    "rooms": {
+      "$roomCode": {
+        // Any authenticated user can read the room state to sync their player
+        ".read": "auth != null",
+        
+        // To write (create) a room, user must be authenticated.
+        // To edit room parameters, the user must be the designated host.
+        ".write": "auth != null && (!data.exists() || data.child('hostUid').val() === auth.uid)",
+        
+        "playbackState": {
+          // Double safeguard: only host UIDs can update playback states
+          ".write": "auth != null && data.parent().child('hostUid').val() === auth.uid"
+        },
+        
+        "currentSong": {
+          // Double safeguard: only host UIDs can change the current playing track details
+          ".write": "auth != null && data.parent().child('hostUid').val() === auth.uid"
+        },
+        
+        "participants": {
+          "$uid": {
+            // Any authenticated user can write, update, or remove their own participant node (e.g. onDisconnect)
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        }
+      }
+    }
+  }
+}
