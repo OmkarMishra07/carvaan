@@ -551,6 +551,164 @@
       border-color: #555 !important;
       color: #FFF !important;
     }
+
+    /* =========================================================================
+       MOBILE RESPONSIVENESS AND PORTABLE STYLES
+       ========================================================================= */
+    @media (max-width: 767px) {
+      body {
+        padding: 8px !important;
+        overflow-x: hidden !important;
+        align-items: flex-start !important;
+      }
+      .app-container {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        margin-bottom: 72px !important; /* Spacing for bottom navigation bar */
+      }
+      .navbar {
+        padding: 10px !important;
+      }
+      .main-layout {
+        flex-direction: column !important;
+        margin-top: 12px !important;
+        gap: 16px !important;
+      }
+      
+      /* Bottom Navigation Bar on Mobile */
+      .left-nav {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 60px !important;
+        flex-direction: row !important;
+        justify-content: space-around !important;
+        padding: 0 8px !important;
+        border-radius: 0 !important;
+        border-top: 2px solid #111111 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: none !important;
+        z-index: 1000 !important;
+        background-color: #EBEBEB !important;
+        box-shadow: 0px -4px 10px rgba(0, 0, 0, 0.05);
+      }
+      .nav-item {
+        width: auto !important;
+        flex: 1 !important;
+        padding: 12px 0 !important;
+        font-size: 20px !important;
+        border-left: none !important;
+        border-bottom: 3px solid transparent !important;
+      }
+      .nav-item.active {
+        border-bottom: 3px solid #111111 !important;
+      }
+
+      /* Panels */
+      .center-panel {
+        width: 100% !important;
+        gap: 16px !important;
+      }
+      .turntable-panel {
+        padding: 10px !important;
+      }
+      #turntable-root {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 400px !important;
+      }
+      
+      .right-panel {
+        width: 100% !important;
+      }
+      
+      /* Repositioned Search bar on mobile */
+      #search-wrap {
+        width: 100% !important;
+        margin-bottom: 12px !important;
+      }
+    }
+
+    /* MINI PLAYER BAR (MOBILE) */
+    .mini-player-bar {
+      position: fixed;
+      bottom: 72px; /* Right above the bottom nav */
+      left: 12px;
+      right: 12px;
+      height: 56px;
+      background-color: #EBEBEB;
+      border: 2px solid #111111;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 12px;
+      box-shadow: 4px 4px 0px #111111;
+      cursor: pointer;
+      z-index: 999;
+      animation: slideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .mini-player-art {
+      width: 36px;
+      height: 36px;
+      object-fit: cover;
+      filter: grayscale(100%);
+      border: 1px solid #111111;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .mini-player-info {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .mini-player-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #111111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mini-player-artist {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      color: #555555;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .mini-player-btn {
+      background: none;
+      border: 1px solid #111111;
+      border-radius: 4px;
+      width: 32px;
+      height: 32px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .mini-player-btn:active {
+      background-color: #111111;
+      color: #EBEBEB;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -673,10 +831,10 @@
       
       <!-- LEFT ICON NAV (48px wide) -->
       <div class="left-nav">
-        <button class="nav-item active" onclick="selectNav(this, 'Home')" title="Home">⌂</button>
+        <button id="nav-player" class="nav-item active" onclick="selectNav(this, 'Player')" title="Player">◎</button>
+        <button id="nav-search" class="nav-item" onclick="selectNav(this, 'Search')" title="Search">⌕</button>
         <button class="nav-item" onclick="selectNav(this, 'Favorites')" title="Favorites">♡</button>
         <button class="nav-item" onclick="selectNav(this, 'Songs')" title="Tracks">♪</button>
-        <button class="nav-item" onclick="selectNav(this, 'Turntable')" title="Visualizer">◎</button>
         <button class="nav-item" onclick="selectNav(this, 'Equalizer')" title="Settings">⚖</button>
         <button class="nav-item" onclick="selectNav(this, 'Options')" title="System Menu">⬡</button>
       </div>
@@ -807,6 +965,16 @@
 
   </div>
 
+  <!-- Mini Player Bar for mobile when minimized -->
+  <div id="mini-player-bar" class="mini-player-bar" onclick="expandMobilePlayer()" style="display: none;">
+    <img id="mini-art" src="" alt="Art" class="mini-player-art" />
+    <div class="mini-player-info">
+      <div id="mini-title" class="mini-player-title">Song Title</div>
+      <div id="mini-artist" class="mini-player-artist">Artist Name</div>
+    </div>
+    <button id="mini-play-btn" class="mini-player-btn" onclick="togglePlayMobile(event)">▶</button>
+  </div>
+
   <!-- Notification Popup Banner -->
   <div id="notification-banner" class="notification-banner">Notification banner loaded.</div>
 
@@ -825,6 +993,7 @@
     let lastDrawnTime = -1;
     let canvasWidth = 320;
     let canvasHeight = 40;
+    let currentMobileTab = 'player'; // 'player' | 'search'
 
     // Right panel view state
     let rightView = 'browse'; // 'browse' | 'search'
@@ -955,8 +1124,8 @@
 
     // Initialize application on DOM content load
     document.addEventListener('DOMContentLoaded', () => {
-      // Scale canvas for high-DPI
-      initCanvas();
+      // Setup layout and canvas for mobile responsiveness and high-DPI
+      applyResponsiveLayout();
 
       // Render the initial right panel
       renderRightPanel();
@@ -1103,8 +1272,24 @@
       const song = songs[index];
 
       // Update text
+      const primaryArtist = song.artists?.primary?.[0]?.name || 'Unknown Artist';
       document.getElementById('song-title').textContent = song.name;
-      document.getElementById('song-artist').textContent = song.artists?.primary?.[0]?.name || 'Unknown Artist';
+      document.getElementById('song-artist').textContent = primaryArtist;
+      
+      // Update mini player bar text/images
+      const miniArt = document.getElementById('mini-art');
+      const miniTitle = document.getElementById('mini-title');
+      const miniArtist = document.getElementById('mini-artist');
+      const miniPlayer = document.getElementById('mini-player-bar');
+      
+      if (miniArt) miniArt.src = song.image?.[2]?.url || song.image?.[0]?.url || '';
+      if (miniTitle) miniTitle.textContent = song.name;
+      if (miniArtist) miniArtist.textContent = primaryArtist;
+      
+      // If we are currently in mobile search view, show the mini player
+      if (miniPlayer && currentMobileTab === 'search' && window.innerWidth < 768) {
+        miniPlayer.style.display = 'flex';
+      }
       
       // Seed random likes count if not cached
       if (!likesCache[song.id]) {
@@ -1210,6 +1395,22 @@
         root.classList.add('paused');
       }
       updatePlayButton();
+
+      // Sync mini player play button icon
+      const miniPlayBtn = document.getElementById('mini-play-btn');
+      if (miniPlayBtn) {
+        miniPlayBtn.textContent = playing ? '⏸' : '▶';
+      }
+
+      // If playing on mobile, return to full player view
+      if (playing && window.innerWidth < 768 && currentMobileTab !== 'player') {
+        const playerBtn = document.getElementById('nav-player');
+        if (playerBtn) {
+          selectNav(playerBtn, 'Player');
+        } else {
+          switchMobileTab('player');
+        }
+      }
 
       // Sync active search item controls overlay
       if (rightView === 'search') {
@@ -1344,6 +1545,23 @@
       navs.forEach(n => n.classList.remove('active'));
       btn.classList.add('active');
       addNotification(`Dashboard View: ${navName}`);
+
+      if (navName === 'Player') {
+        switchMobileTab('player');
+      } else if (navName === 'Search') {
+        switchMobileTab('search');
+        // Auto focus search input on search tab select
+        setTimeout(() => {
+          const sInput = document.getElementById('search-input');
+          if (sInput) sInput.focus();
+        }, 100);
+      } else {
+        // Other placeholder tabs on mobile should default to search panel view
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+          switchMobileTab('search');
+        }
+      }
     }
 
     // Header toggle actions dropdown
@@ -1417,6 +1635,96 @@
       return bars;
     }
 
+    // Mobile Responsive Layout Helpers
+    function adaptSearchInputForMobile() {
+      const searchWrap = document.getElementById('search-wrap');
+      if (!searchWrap) return;
+      
+      const isMobile = window.innerWidth < 768;
+      const rightPanel = document.querySelector('.right-panel');
+      const navbar = document.querySelector('.navbar');
+      const actions = document.querySelector('.nav-actions');
+
+      if (isMobile) {
+        if (rightPanel && searchWrap.parentElement !== rightPanel) {
+          rightPanel.insertBefore(searchWrap, rightPanel.firstChild);
+        }
+      } else {
+        if (navbar && searchWrap.parentElement !== navbar) {
+          navbar.insertBefore(searchWrap, actions);
+        }
+      }
+    }
+
+    function switchMobileTab(tab) {
+      currentMobileTab = tab;
+      const isMobile = window.innerWidth < 768;
+      if (!isMobile) return;
+
+      const centerPanel = document.querySelector('.center-panel');
+      const rightPanel = document.querySelector('.right-panel');
+      const miniPlayer = document.getElementById('mini-player-bar');
+
+      if (tab === 'player') {
+        if (centerPanel) centerPanel.style.display = 'flex';
+        if (rightPanel) rightPanel.style.display = 'none';
+        if (miniPlayer) miniPlayer.style.display = 'none';
+      } else if (tab === 'search') {
+        if (centerPanel) centerPanel.style.display = 'none';
+        if (rightPanel) rightPanel.style.display = 'flex';
+        if (miniPlayer && songs.length > 0 && songs[currentIndex]) {
+          miniPlayer.style.display = 'flex';
+        }
+      }
+    }
+
+    function applyResponsiveLayout() {
+      const isMobile = window.innerWidth < 768;
+      const centerPanel = document.querySelector('.center-panel');
+      const rightPanel = document.querySelector('.right-panel');
+      const miniPlayer = document.getElementById('mini-player-bar');
+
+      adaptSearchInputForMobile();
+
+      if (isMobile) {
+        if (currentMobileTab === 'player') {
+          if (centerPanel) centerPanel.style.display = 'flex';
+          if (rightPanel) rightPanel.style.display = 'none';
+          if (miniPlayer) miniPlayer.style.display = 'none';
+        } else {
+          if (centerPanel) centerPanel.style.display = 'none';
+          if (rightPanel) rightPanel.style.display = 'flex';
+          if (miniPlayer && songs.length > 0 && songs[currentIndex]) {
+            miniPlayer.style.display = 'flex';
+          } else if (miniPlayer) {
+            miniPlayer.style.display = 'none';
+          }
+        }
+      } else {
+        // Desktop restores both panels
+        if (centerPanel) centerPanel.style.display = 'flex';
+        if (rightPanel) rightPanel.style.display = 'flex';
+        if (miniPlayer) miniPlayer.style.display = 'none';
+      }
+      
+      initCanvas();
+      drawWaveform();
+    }
+
+    function expandMobilePlayer() {
+      const playerBtn = document.getElementById('nav-player');
+      if (playerBtn) {
+        selectNav(playerBtn, 'Player');
+      } else {
+        switchMobileTab('player');
+      }
+    }
+
+    function togglePlayMobile(e) {
+      if (e) e.stopPropagation();
+      togglePlay();
+    }
+
     // High-DPI Canvas Initialization
     function initCanvas() {
       if (!canvas) return;
@@ -1485,10 +1793,9 @@
     }
     animLoop();
 
-    // Redraw on window resize (handles zoom and layout updates)
+    // Redraw and rearrange layout on window resize (handles zoom and layout updates)
     window.addEventListener('resize', () => {
-      initCanvas();
-      drawWaveform();
+      applyResponsiveLayout();
     });
 
     /* =========================================================================
