@@ -2,33 +2,74 @@ const JIOSAAVN_BASE = 'https://jiosavnapi-production.up.railway.app';
 
 export const lyricsService = {
   // Fetch lyrics with failover options
-  async fetchLyrics(songId, title, artist, durationSeconds) {
+  async fetchLyrics(songId, title, artist, durationSeconds, hasLyrics = false, lyricsId = null, artists = null) {
     // 1. Try JioSaavn API
-    try {
-      console.log(`Fetching lyrics from JioSaavn for ID: ${songId}`);
-      const response = await fetch(`${JIOSAAVN_BASE}/api/songs/${songId}/lyrics`);
-      if (response.ok) {
-        const json = await response.json();
-        
-        // Handle various response schemas
-        const lyricsText = json.lyrics || json.data?.lyrics || (json.success && json.data && json.data.lyrics);
-        
-        if (lyricsText && lyricsText.trim()) {
-          console.log('JioSaavn plain lyrics fetched successfully.');
-          return {
-            synced: false,
-            lines: lyricsText.split('\n').map(text => ({ text: text.trim() })).filter(l => l.text)
-          };
+    if (hasLyrics && lyricsId) {
+      try {
+        console.log(`Fetching lyrics from JioSaavn for ID: ${songId}`);
+        const response = await fetch(`${JIOSAAVN_BASE}/api/songs/${songId}/lyrics`);
+        if (response.ok) {
+          const json = await response.json();
+          
+          // Handle various response schemas
+          const lyricsText = json.lyrics || json.data?.lyrics || (json.success && json.data && json.data.lyrics);
+          
+          if (lyricsText && lyricsText.trim()) {
+            console.log('JioSaavn plain lyrics fetched successfully.');
+            return {
+              synced: false,
+              lines: lyricsText.split('\n').map(text => ({ text: text.trim() })).filter(l => l.text)
+            };
+          }
         }
+      } catch (err) {
+        console.log('JioSaavn lyrics fetch failed, falling back to LRClib:', err.message);
       }
-    } catch (err) {
-      console.warn('JioSaavn lyrics fetch failed, falling back to LRClib:', err);
+    } else {
+      console.log(`Skipping JioSaavn lyrics API for song ID: ${songId} (hasLyrics: ${hasLyrics}, lyricsId: ${lyricsId})`);
     }
 
     // 2. Try LRClib API
     try {
+      let cleanArtist = artist;
+
+      if (artists) {
+        // Try to find the first primary or all artist who is a singer
+        const allArtists = [
+          ...(artists.primary || []),
+          ...(artists.featured || []),
+          ...(artists.all || [])
+        ];
+        
+        // Find the first artist with role 'singer'
+        const firstSinger = allArtists.find(a => a.role === 'singer');
+        
+        if (firstSinger) {
+          cleanArtist = firstSinger.name;
+        } else if (artists.primary && artists.primary.length > 0) {
+          // If no explicit 'singer' role, pick the first primary artist who is not a lyricist
+          const knownLyricists = ['Sameer', 'Sameer Anjaan', 'Javed Akhtar', 'Gulzar', 'Anand Bakshi', 'Majrooh Sultanpuri', 'Prasoon Joshi', 'Irshad Kamil', 'Amitabh Bhattacharya'];
+          const nonLyricist = artists.primary.find(a => !knownLyricists.some(kl => a.name?.toLowerCase().includes(kl.toLowerCase())));
+          if (nonLyricist) {
+            cleanArtist = nonLyricist.name;
+          } else {
+            cleanArtist = artists.primary[0].name;
+          }
+        }
+      } else {
+        // If we only have the artist string, try to filter out known lyricists if multiple artists exist
+        const parts = artist.split(',').map(p => p.trim());
+        if (parts.length > 1) {
+          const knownLyricists = ['Sameer', 'Sameer Anjaan', 'Javed Akhtar', 'Gulzar', 'Anand Bakshi', 'Majrooh Sultanpuri', 'Prasoon Joshi', 'Irshad Kamil', 'Amitabh Bhattacharya'];
+          const nonLyricist = parts.find(p => !knownLyricists.some(kl => p.toLowerCase().includes(kl.toLowerCase())));
+          if (nonLyricist) {
+            cleanArtist = nonLyricist;
+          }
+        }
+      }
+
       // Clean artist and track names to increase match probability
-      const cleanArtist = artist.replace(/\(.*\)/g, '').replace(/feat\..*/gi, '').trim();
+      cleanArtist = cleanArtist.replace(/\(.*\)/g, '').replace(/feat\..*/gi, '').trim();
       const cleanTitle = title.replace(/\(.*\)/g, '').replace(/feat\..*/gi, '').trim();
       const duration = durationSeconds ? Math.round(durationSeconds) : '';
 
@@ -61,7 +102,7 @@ export const lyricsService = {
         }
       }
     } catch (err) {
-      console.warn('LRClib lyrics fetch failed:', err);
+      console.log('LRClib lyrics fetch failed:', err.message);
     }
 
     return {

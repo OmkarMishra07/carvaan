@@ -424,12 +424,18 @@ export default function App() {
       try {
         const songDetails = queue[currentIndex] || currentSong;
         const dur = songDetails.duration || duration || 0;
+        const hasLyrics = songDetails.hasLyrics || currentSong.hasLyrics || false;
+        const lyricsId = songDetails.lyricsId || currentSong.lyricsId || null;
+        const artists = songDetails.artists || currentSong.artists || null;
         
         const res = await lyricsService.fetchLyrics(
           currentSong.id,
           currentSong.name,
           currentSong.artist,
-          dur
+          dur,
+          hasLyrics,
+          lyricsId,
+          artists
         );
 
         if (res.error) {
@@ -440,7 +446,7 @@ export default function App() {
           setLyricsSynced(res.synced);
         }
       } catch (err) {
-        console.error("Lyrics load error:", err);
+        console.log("Lyrics failed to load:", err.message);
         setLyricsLines([]);
         setLyricsSynced(false);
       } finally {
@@ -500,7 +506,10 @@ export default function App() {
               name: song.title,
               artist: song.primaryArtists,
               image: song.image,
-              audioUrl: song.downloadUrl
+              audioUrl: song.downloadUrl,
+              hasLyrics: song.hasLyrics || false,
+              lyricsId: song.lyricsId || null,
+              artists: song.artists || null
             });
             if (tuneModeActive) {
               if (vocalRemoverRef.current) vocalRemoverRef.current.setTuneMode(false);
@@ -586,7 +595,10 @@ export default function App() {
       name: song.name || song.title,
       artist: song.artists?.primary?.[0]?.name || song.artist || 'Unknown Artist',
       image: song.image?.[2]?.url || song.image?.[1]?.url || song.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500',
-      audioUrl: payloadUrl
+      audioUrl: payloadUrl,
+      hasLyrics: song.hasLyrics || false,
+      lyricsId: song.lyricsId || null,
+      artists: song.artists || null
     });
     
     setCurrentIndex(targetIdx);
@@ -612,9 +624,12 @@ export default function App() {
           const payload = {
             id: song.id,
             name: song.name || song.title,
-            artist: song.artists?.primary?.[0]?.name || song.artist || 'Unknown Artist',
+            artist: targetSong.artists?.primary?.[0]?.name || song.artists?.primary?.[0]?.name || song.artist || 'Unknown Artist',
             image: song.image?.[2]?.url || song.image?.[1]?.url || song.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500',
-            audioUrl: downloadUrl
+            audioUrl: downloadUrl,
+            hasLyrics: targetSong.hasLyrics || song.hasLyrics || false,
+            lyricsId: targetSong.lyricsId || song.lyricsId || null,
+            artists: targetSong.artists || song.artists || null
           };
           
           await JamRoomService.updateSong(jamRoomCode, payload);

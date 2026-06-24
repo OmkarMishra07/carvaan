@@ -518,7 +518,10 @@ export const JamRoomService = {
       title: song.name || song.title,
       primaryArtists: song.artists?.primary?.[0]?.name || song.artist || 'Unknown Artist',
       image: song.image?.[2]?.url || song.image?.[1]?.url || song.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=500',
-      downloadUrl: song.audioUrl || song.downloadUrl?.[4]?.url || song.downloadUrl?.[0]?.url || ''
+      downloadUrl: song.audioUrl || song.downloadUrl?.[4]?.url || song.downloadUrl?.[0]?.url || '',
+      hasLyrics: song.hasLyrics || false,
+      lyricsId: song.lyricsId || null,
+      artists: song.artists || null
     };
 
     if (!isMockFirebase && rtdb) {
