@@ -70,7 +70,7 @@ if (!isMockFirebase) {
 // ----------------------------------------------------
 // MULTI-TAB MOCK BROADCAST (For Jam Room Demo Mode)
 // ----------------------------------------------------
-const jamBroadcast = typeof window !== 'undefined' ? new BroadcastChannel('OMusicJamRoomMock') : null;
+const jamBroadcast = (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('OMusicJamRoomMock') : null;
 const mockRoomsState = {};
 const mockRoomListeners = {};
 
