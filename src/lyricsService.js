@@ -1,5 +1,17 @@
 const JIOSAAVN_BASE = 'https://jiosavnapi-production.up.railway.app';
 
+const isRecordLabel = (name) => {
+  if (!name) return true;
+  const lower = name.toLowerCase();
+  const labelKeywords = [
+    'cassettes', 'industries', 'private limited', 'limited', 'ltd.', ' ltd', 'company', 
+    'entertainment', 'records', 'publishing', 't-series', 'saregama', 'tips', 'venus', 
+    'shemaroo', 'believe sas', 'believe a.s.', 'sony music', 'universal music', 'yrf', 
+    'zee music', 't series'
+  ];
+  return labelKeywords.some(kw => lower.includes(kw));
+};
+
 export const lyricsService = {
   // Fetch lyrics with failover options
   async fetchLyrics(songId, title, artist, durationSeconds, hasLyrics = false, lyricsId = null, artists = null) {
@@ -34,36 +46,49 @@ export const lyricsService = {
       let cleanArtist = artist;
 
       if (artists) {
-        // Try to find the first primary or all artist who is a singer
+        // Try to find the first primary or all artist who is a singer (and not a record label)
         const allArtists = [
           ...(artists.primary || []),
           ...(artists.featured || []),
           ...(artists.all || [])
         ];
         
-        // Find the first artist with role 'singer'
-        const firstSinger = allArtists.find(a => a.role === 'singer');
+        // Find the first artist with role 'singer' who is not a record label
+        const firstSinger = allArtists.find(a => a.role === 'singer' && !isRecordLabel(a.name));
         
         if (firstSinger) {
           cleanArtist = firstSinger.name;
         } else if (artists.primary && artists.primary.length > 0) {
-          // If no explicit 'singer' role, pick the first primary artist who is not a lyricist
+          // If no explicit 'singer' role, pick the first primary artist who is not a lyricist and not a record label
           const knownLyricists = ['Sameer', 'Sameer Anjaan', 'Javed Akhtar', 'Gulzar', 'Anand Bakshi', 'Majrooh Sultanpuri', 'Prasoon Joshi', 'Irshad Kamil', 'Amitabh Bhattacharya'];
-          const nonLyricist = artists.primary.find(a => !knownLyricists.some(kl => a.name?.toLowerCase().includes(kl.toLowerCase())));
+          const nonLyricist = artists.primary.find(a => 
+            !isRecordLabel(a.name) && 
+            !knownLyricists.some(kl => a.name?.toLowerCase().includes(kl.toLowerCase()))
+          );
           if (nonLyricist) {
             cleanArtist = nonLyricist.name;
           } else {
-            cleanArtist = artists.primary[0].name;
+            // Find any primary artist that is not a record label
+            const nonLabelPrimary = artists.primary.find(a => !isRecordLabel(a.name));
+            cleanArtist = nonLabelPrimary ? nonLabelPrimary.name : artists.primary[0].name;
           }
         }
       } else {
-        // If we only have the artist string, try to filter out known lyricists if multiple artists exist
+        // If we only have the artist string, try to filter out known lyricists and record labels
         const parts = artist.split(',').map(p => p.trim());
         if (parts.length > 1) {
           const knownLyricists = ['Sameer', 'Sameer Anjaan', 'Javed Akhtar', 'Gulzar', 'Anand Bakshi', 'Majrooh Sultanpuri', 'Prasoon Joshi', 'Irshad Kamil', 'Amitabh Bhattacharya'];
-          const nonLyricist = parts.find(p => !knownLyricists.some(kl => p.toLowerCase().includes(kl.toLowerCase())));
+          const nonLyricist = parts.find(p => 
+            !isRecordLabel(p) && 
+            !knownLyricists.some(kl => p.toLowerCase().includes(kl.toLowerCase()))
+          );
           if (nonLyricist) {
             cleanArtist = nonLyricist;
+          } else {
+            const nonLabelPart = parts.find(p => !isRecordLabel(p));
+            if (nonLabelPart) {
+              cleanArtist = nonLabelPart;
+            }
           }
         }
       }
