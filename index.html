@@ -837,6 +837,8 @@
     // Audio Element configuration
     const audio = new Audio();
     audio.crossOrigin = 'anonymous';
+    audio.preload = 'auto'; // Aggressive buffering to fix stuttering/tearing
+    audio.volume = 0.85; // Prevent digital clipping/tearing by providing 15% headroom
 
     // DOM Elements
     const canvas = document.getElementById('waveform');
@@ -1049,7 +1051,9 @@
 
       // Set Audio stream
       const streamUrl = song.downloadUrl?.[4]?.url || song.downloadUrl?.[0]?.url || '';
+      audio.pause(); // Flush current decoder buffers
       audio.src = streamUrl;
+      audio.load(); // Aggressively load new stream resources
 
       // Track playback times
       duration = song.duration || 0;
@@ -1078,6 +1082,15 @@
     audio.addEventListener('error', (e) => {
       showError('Could not load audio stream. Try another song.');
       setPlayingState(false);
+    });
+
+    audio.addEventListener('waiting', () => {
+      document.getElementById('loading-indicator').textContent = 'Buffering stream data...';
+      document.getElementById('loading-indicator').style.display = 'block';
+    });
+
+    audio.addEventListener('playing', () => {
+      document.getElementById('loading-indicator').style.display = 'none';
     });
 
     // Play/Pause Action Toggle
@@ -1192,8 +1205,8 @@
         addNotification('Audio compression active (Vol 45%)');
       } else {
         btn.classList.remove('active');
-        audio.volume = 1.0;
-        addNotification('Audio compression disabled (Vol 100%)');
+        audio.volume = 0.85; // Headroom to prevent digital clipping/tearing
+        addNotification('Audio compression disabled (Vol 85%)');
       }
     }
 
