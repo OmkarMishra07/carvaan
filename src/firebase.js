@@ -42,11 +42,14 @@ const firebaseConfig = {
   databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL
 };
 
+const realFirebaseConfigured = 
+  firebaseConfig.apiKey && 
+  !firebaseConfig.apiKey.startsWith('mock-') && 
+  !firebaseConfig.apiKey.startsWith('your-');
+
 // Check if keys are placeholders or not set, or if explicitly running in Demo Guest session
 export const isMockFirebase = 
-  !firebaseConfig.apiKey || 
-  firebaseConfig.apiKey.startsWith('mock-') || 
-  firebaseConfig.apiKey.startsWith('your-') ||
+  !realFirebaseConfigured ||
   (typeof window !== 'undefined' && localStorage.getItem('OMusic_sessionMode') === 'mock');
 
 let app = null;
@@ -54,7 +57,7 @@ let auth = null;
 let db = null;
 let rtdb = null;
 
-if (!isMockFirebase) {
+if (realFirebaseConfigured) {
   try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -67,6 +70,7 @@ if (!isMockFirebase) {
 } else {
   console.log("Firebase is running in Demo/Mock Mode. Playback & personalized states will be saved locally.");
 }
+
 
 // ----------------------------------------------------
 // MULTI-TAB MOCK BROADCAST (For Jam Room Demo Mode)
@@ -129,6 +133,8 @@ export const AuthService = {
 
       localStorage.removeItem('OMusic_sessionMode');
       localStorage.removeItem('OMusic_mockUser');
+      localStorage.setItem('OMusic_loginToast', 'true');
+      window.location.reload();
       return result.user;
     } else {
       // Mock login implementation with personalized name prompt

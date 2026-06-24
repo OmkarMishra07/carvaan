@@ -248,6 +248,20 @@ export default function App() {
   };
 
   // ----------------------------------------------------
+  // LOGIN TOAST HANDLER (Across Page Reloads)
+  // ----------------------------------------------------
+  useEffect(() => {
+    const loginToast = localStorage.getItem('OMusic_loginToast');
+    if (loginToast === 'true') {
+      addToast("Logged in with Google!", "success");
+      localStorage.removeItem('OMusic_loginToast');
+    } else if (loginToast === 'guest') {
+      addToast("Logged in as Demo Guest!", "info");
+      localStorage.removeItem('OMusic_loginToast');
+    }
+  }, []);
+
+  // ----------------------------------------------------
   // AUTH HYDRATION
   // ----------------------------------------------------
   useEffect(() => {
@@ -1156,6 +1170,7 @@ export default function App() {
                   };
                   localStorage.setItem('OMusic_sessionMode', 'mock');
                   localStorage.setItem('OMusic_mockUser', JSON.stringify(mockUser));
+                  localStorage.setItem('OMusic_loginToast', 'guest');
                   window.location.reload();
                 } catch (err) {
                   console.error(err);
