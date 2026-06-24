@@ -1731,7 +1731,7 @@ export default function App() {
                         <div className="flex flex-wrap gap-2">
                           {Object.entries(jamRoomData?.participants || {}).map(([uid, p]) => (
                             <div key={uid} className="bg-white border border-[#C0C0C0] text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1.5">
-                              <span>{p.displayName}</span>
+                              <span>{p?.displayName || 'Guest'}</span>
                               {jamRoomData.hostUid === uid && <span className="text-[8px] bg-red-100 text-red-700 px-1 rounded">Host</span>}
                             </div>
                           ))}
@@ -1785,11 +1785,11 @@ export default function App() {
                             <button onClick={(e) => handleDeletePlaylist(e, pl.id, pl.name)} className="text-[10px] text-red-600 hover:underline">Delete</button>
                           </div>
                           
-                          {(!pl.songIds || pl.songIds.length === 0) ? (
+                           {(!pl.songIds || !Array.isArray(pl.songIds) || pl.songIds.length === 0) ? (
                             <p className="text-[9px] text-[#555555] italic">No tracks in this playlist.</p>
                           ) : (
                             <div className="flex flex-col gap-1.5">
-                              {pl.songIds.map(sid => (
+                              {Array.isArray(pl.songIds) && pl.songIds.map(sid => (
                                 <div key={sid} className="flex justify-between items-center text-[10px] bg-white p-1 rounded border border-[#C0C0C0]/50">
                                   <span className="truncate max-w-[180px] font-bold">{sid}</span>
                                   <button
