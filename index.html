@@ -552,6 +552,10 @@
       color: #FFF !important;
     }
 
+    #mobile-search-container {
+      display: none;
+    }
+
     /* =========================================================================
        MOBILE RESPONSIVENESS AND PORTABLE STYLES
        ========================================================================= */
@@ -626,9 +630,14 @@
       }
       
       /* Repositioned Search bar on mobile */
-      #search-wrap {
+      #mobile-search-container {
+        display: block !important;
         width: 100% !important;
         margin-bottom: 12px !important;
+      }
+      #search-wrap {
+        width: 100% !important;
+        margin-bottom: 0px !important;
       }
     }
 
@@ -703,6 +712,25 @@
     .mini-player-btn:active {
       background-color: #111111;
       color: #EBEBEB;
+    }
+
+    /* MINI PLAYER PROGRESS BAR */
+    .mini-progress-track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: #CCCCCC;
+      border-bottom-left-radius: 2px;
+      border-bottom-right-radius: 2px;
+      overflow: hidden;
+    }
+    .mini-progress-fill {
+      width: 0%;
+      height: 100%;
+      background-color: #CC0000;
+      transition: width 0.1s linear;
     }
 
     @keyframes slideUp {
@@ -959,7 +987,10 @@
       </div>
 
       <!-- RIGHT PANEL (flex-1) — Dynamic content rendered by JS -->
-      <div class="right-panel"></div>
+      <div class="right-panel">
+        <div id="mobile-search-container"></div>
+        <div id="right-panel-content" style="flex:1; display:flex; flex-direction:column; overflow-y:auto; gap: 24px;"></div>
+      </div>
 
     </div>
 
@@ -973,6 +1004,9 @@
       <div id="mini-artist" class="mini-player-artist">Artist Name</div>
     </div>
     <button id="mini-play-btn" class="mini-player-btn" onclick="togglePlayMobile(event)">▶</button>
+    <div class="mini-progress-track">
+      <div id="mini-progress-fill" class="mini-progress-fill"></div>
+    </div>
   </div>
 
   <!-- Notification Popup Banner -->
@@ -1641,13 +1675,13 @@
       if (!searchWrap) return;
       
       const isMobile = window.innerWidth < 768;
-      const rightPanel = document.querySelector('.right-panel');
+      const mobileSearchContainer = document.getElementById('mobile-search-container');
       const navbar = document.querySelector('.navbar');
       const actions = document.querySelector('.nav-actions');
 
       if (isMobile) {
-        if (rightPanel && searchWrap.parentElement !== rightPanel) {
-          rightPanel.insertBefore(searchWrap, rightPanel.firstChild);
+        if (mobileSearchContainer && searchWrap.parentElement !== mobileSearchContainer) {
+          mobileSearchContainer.appendChild(searchWrap);
         }
       } else {
         if (navbar && searchWrap.parentElement !== navbar) {
@@ -1787,6 +1821,14 @@
       if (tick !== lastDrawnTime) {
         drawWaveform();
         updateTimeDisplay();
+        
+        // Sync progress fill in the mobile mini player
+        const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+        const miniProgressFill = document.getElementById('mini-progress-fill');
+        if (miniProgressFill) {
+          miniProgressFill.style.width = progress + '%';
+        }
+        
         lastDrawnTime = tick;
       }
       requestAnimationFrame(animLoop);
@@ -1802,7 +1844,7 @@
        RIGHT PANEL RENDERING AND VIEW SYSTEM
        ========================================================================= */
     function renderRightPanel() {
-      const rightPanel = document.querySelector('.right-panel');
+      const rightPanel = document.getElementById('right-panel-content') || document.querySelector('.right-panel');
       if (rightView === 'browse') {
         rightPanel.innerHTML = `
           <!-- Section: Categories -->
