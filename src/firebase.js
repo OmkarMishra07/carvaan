@@ -110,7 +110,11 @@ if (typeof window !== 'undefined') {
 
 export const AuthService = {
   async signInWithGoogle() {
-    if (!isMockFirebase && auth) {
+    const realFirebaseConfigured = firebaseConfig.apiKey && 
+                                   !firebaseConfig.apiKey.startsWith('mock-') && 
+                                   !firebaseConfig.apiKey.startsWith('your-');
+
+    if (realFirebaseConfigured && auth) {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
@@ -123,19 +127,28 @@ export const AuthService = {
         createdAt: serverTimestamp()
       }, { merge: true });
 
+      localStorage.removeItem('OMusic_sessionMode');
+      localStorage.removeItem('OMusic_mockUser');
       return result.user;
     } else {
-      // Mock login implementation
+      // Mock login implementation with personalized name prompt
+      let name = null;
+      if (typeof window !== 'undefined') {
+        name = window.prompt("Enter your name to initialize your OMusic retro account:");
+      }
+      const displayName = name?.trim() || 'Demo Guest';
       const mockUser = {
         uid: 'mock_user_' + Math.random().toString(36).substr(2, 9),
-        displayName: 'Oji Ganteng',
-        email: 'oji.ganteng@example.com',
+        displayName,
+        email: displayName.toLowerCase().replace(/\s+/g, '.') + '@omusic.com',
         photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
         createdAt: Date.now()
       };
       currentMockUser = mockUser;
+      localStorage.setItem('OMusic_sessionMode', 'mock');
       localStorage.setItem('OMusic_mockUser', JSON.stringify(mockUser));
       mockAuthListeners.forEach(cb => cb(mockUser));
+      window.location.reload();
       return mockUser;
     }
   },

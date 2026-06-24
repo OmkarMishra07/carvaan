@@ -1088,6 +1088,8 @@ export default function App() {
   // ----------------------------------------------------
   const handleGoogleLogin = async () => {
     try {
+      localStorage.removeItem('OMusic_sessionMode');
+      localStorage.removeItem('OMusic_mockUser');
       await AuthService.signInWithGoogle();
       addToast("Logged in with Google!", "success");
     } catch (err) {
@@ -1115,6 +1117,7 @@ export default function App() {
       {/* HTML5 Audio Element */}
       <audio
         ref={audioRef}
+        crossOrigin="anonymous"
         src={currentSong?.audioUrl || ''}
         onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration || 0)}
@@ -1443,16 +1446,18 @@ export default function App() {
                     onClick={() => setShowLyrics(!showLyrics)}
                     disabled={!currentSong}
                     className={`brutalist-button px-3 py-1.5 ${showLyrics ? 'active-pill bg-[#111111] text-white' : ''}`}
+                    title="Toggle Timed Lyrics"
                   >
-                    LYRICS
+                    💬 Lyrics
                   </button>
 
                   <button
                     onClick={handleTuneModeToggle}
                     disabled={!currentSong || tuneModeLoading}
                     className={`brutalist-button px-3 py-1.5 ${tuneModeActive ? 'active-pill bg-[#111111] text-white' : ''}`}
+                    title="Toggle Tune Mode (Vocal Attenuator)"
                   >
-                    {tuneModeLoading ? 'Tuning...' : 'TUNE MODE'}
+                    {tuneModeLoading ? 'Tuning...' : '🎵 Tune Mode'}
                   </button>
                 </div>
 
@@ -1460,21 +1465,22 @@ export default function App() {
                 <div className="controls-row flex justify-between items-center mt-3 border-t border-[#C0C0C0]/50 pt-3">
                   <button 
                     onClick={() => setIsCompressed(!isCompressed)}
-                    className={`control-btn brutalist-button px-3 py-1.5 ${isCompressed ? 'active bg-[#111111] text-white' : ''}`}
+                    className={`control-btn brutalist-button px-4 py-2 ${isCompressed ? 'active bg-[#111111] text-white' : ''}`}
                     title="Toggle Dynamic volume compression"
                   >
-                    COMPRESS
+                    🎛️
                   </button>
-                  <button onClick={handlePrev} className="control-btn brutalist-button px-3 py-1.5">PREV</button>
-                  <button onClick={togglePlay} className="control-btn brutalist-button btn-play-pause px-5 py-1.5 font-extrabold border-[#111111]">
-                    {isPlaying ? 'PAUSE' : 'PLAY'}
+                  <button onClick={handlePrev} className="control-btn brutalist-button px-4 py-2" title="Previous Track">⏮️</button>
+                  <button onClick={togglePlay} className="control-btn brutalist-button btn-play-pause px-6 py-2 font-extrabold border-[#111111]" title={isPlaying ? 'Pause' : 'Play'}>
+                    {isPlaying ? '⏸️' : '▶️'}
                   </button>
-                  <button onClick={handleNext} className="control-btn brutalist-button px-3 py-1.5">NEXT</button>
+                  <button onClick={handleNext} className="control-btn brutalist-button px-4 py-2" title="Next Track">⏭️</button>
                   <button 
                     onClick={() => { setShuffle(!shuffle); addToast(shuffle ? "Shuffle OFF" : "Shuffle ON", 'info'); }}
-                    className={`control-btn brutalist-button px-3 py-1.5 ${shuffle ? 'active bg-[#111111] text-white' : ''}`}
+                    className={`control-btn brutalist-button px-4 py-2 ${shuffle ? 'active bg-[#111111] text-white' : ''}`}
+                    title="Shuffle Playback"
                   >
-                    SHUFFLE
+                    🔀
                   </button>
                 </div>
 
