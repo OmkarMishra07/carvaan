@@ -1079,7 +1079,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#E8E8E8] text-[#111111] font-space p-6 select-none">
+    <div className="flex items-start md:items-center justify-center min-h-screen bg-[#E8E8E8] text-[#111111] font-space p-3 md:p-6 select-none">
       
       {/* HTML5 Audio Element */}
       <audio
@@ -1135,7 +1135,7 @@ export default function App() {
         </div>
       ) : (
         /* MAIN APPLICATION CONTAINER */
-        <div className="app-container max-w-[1200px] min-w-[1100px] w-full flex flex-col gap-6">
+        <div className="app-container max-w-[1200px] min-w-0 md:min-w-[1100px] w-full flex flex-col gap-4 md:gap-6 pb-24 md:pb-0">
           
           {/* NAVBAR */}
           <nav className="navbar h-14 bg-[#EBEBEB] border border-[#C0C0C0] rounded flex items-center justify-between px-4">
@@ -1145,7 +1145,7 @@ export default function App() {
             </div>
 
             {/* Navbar search */}
-            <div style={{ position: 'relative', width: '380px' }}>
+            <div className="hidden md:block relative w-[380px]">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#888]">⌕</span>
               <input
                 ref={searchInputRef}
@@ -1275,10 +1275,10 @@ export default function App() {
           </nav>
 
           {/* BODY LAYOUT */}
-          <div className="main-layout flex flex-row gap-6">
+          <div className="main-layout flex flex-col md:flex-row gap-6">
             
             {/* LEFT NAV SIDEBAR (48px wide) */}
-            <div className="left-nav w-12 bg-[#EBEBEB] border border-[#C0C0C0] rounded flex flex-col items-center gap-4 py-4 h-fit">
+            <div className="hidden md:flex left-nav w-12 bg-[#EBEBEB] border border-[#C0C0C0] rounded flex-col items-center gap-4 py-4 h-fit">
               <button onClick={() => setSelectedNav('Home')} className={`nav-item text-lg w-full text-center py-2 border-l-2 cursor-pointer transition-all ${selectedNav === 'Home' ? 'border-[#111111] text-[#111111] font-bold bg-black/2' : 'border-transparent text-[#555555] hover:text-black'}`} title="Player">💿</button>
               <button onClick={() => setSelectedNav('Search')} className={`nav-item text-lg w-full text-center py-2 border-l-2 cursor-pointer transition-all ${selectedNav === 'Search' ? 'border-[#111111] text-[#111111] font-bold bg-black/2' : 'border-transparent text-[#555555] hover:text-black'}`} title="Search">⌕</button>
               <button onClick={() => setSelectedNav('Favorites')} className={`nav-item text-lg w-full text-center py-2 border-l-2 cursor-pointer transition-all ${selectedNav === 'Favorites' ? 'border-[#111111] text-[#111111] font-bold bg-black/2' : 'border-transparent text-[#555555] hover:text-black'}`} title="Favorites">♡</button>
@@ -1288,11 +1288,11 @@ export default function App() {
             </div>
 
             {/* CENTER PANEL (500px wide) */}
-            <div className="center-panel w-[500px] flex flex-col gap-6 flex-shrink-0">
+            <div className={`center-panel w-full md:w-[500px] flex-col gap-6 flex-shrink-0 ${selectedNav === 'Home' ? 'flex' : 'hidden md:flex'}`}>
               
               {/* Rotating Vinyl Turntable SVG */}
               <div className="turntable-panel bg-[#EBEBEB] border border-[#C0C0C0] rounded p-4 flex items-center justify-center">
-                <svg id="turntable-root" className={isPlaying ? 'playing' : 'paused'} width="400" height="380" viewBox="0 0 400 380" xmlns="http://www.w3.org/2000/svg">
+                <svg id="turntable-root" className={`max-w-[400px] w-full h-auto ${isPlaying ? 'playing' : 'paused'}`} viewBox="0 0 400 380" xmlns="http://www.w3.org/2000/svg">
                   <rect x="10" y="10" width="380" height="360" rx="16" fill="#BBBBBB" stroke="#111111" strokeWidth="2"/>
                   <rect x="25" y="25" width="350" height="330" rx="12" fill="#CCCCCC" stroke="#111111" strokeWidth="2"/>
                   <circle cx="200" cy="190" r="135" fill="#999999" stroke="#111111" strokeWidth="2"/>
@@ -1452,7 +1452,7 @@ export default function App() {
             </div>
 
             {/* RIGHT DASHBOARD PANEL (flex-1) */}
-            <div className="right-panel flex-1 bg-[#EBEBEB] border border-[#C0C0C0] rounded p-5 flex flex-col gap-5 h-[728px] overflow-y-auto">
+            <div className={`right-panel flex-1 bg-[#EBEBEB] border border-[#C0C0C0] rounded p-4 md:p-5 flex-col gap-5 h-auto md:h-[728px] min-h-[400px] md:min-h-0 overflow-y-auto ${selectedNav !== 'Home' ? 'flex' : 'hidden md:flex'}`}>
               
               {/* IF LYRICS ARE SHOWN */}
               {showLyrics && currentSong ? (
@@ -1596,6 +1596,26 @@ export default function App() {
               ) : selectedNav === 'Search' ? (
                 /* SEARCH VIEW RESULTS */
                 <div className="flex flex-col gap-4">
+                  {/* Mobile Search input */}
+                  <div className="block md:hidden relative w-full mb-2">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[#888]">⌕</span>
+                    <input
+                      type="text"
+                      placeholder="Search songs, artists, albums..."
+                      value={searchVal}
+                      onChange={(e) => setSearchVal(e.target.value)}
+                      className="w-full bg-[#F5F5F5] text-xs font-space border border-[#C0C0C0] rounded px-8 py-2.5 focus:outline-none focus:border-[#111111]"
+                    />
+                    {searchVal && (
+                      <button 
+                        onClick={() => setSearchVal('')} 
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#888] font-bold hover:text-black"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
                   <div className="flex justify-between items-center border-b border-[#C0C0C0] pb-2">
                     <span className="text-xs font-bold uppercase">Search results query: "{searchQuery}"</span>
                   </div>
@@ -1947,6 +1967,74 @@ export default function App() {
                 <span>{t.message}</span>
               </div>
             ))}
+          </div>
+
+          {/* MOBILE MINI PLAYER */}
+          {currentSong && selectedNav !== 'Home' && (
+            <div 
+              onClick={() => setSelectedNav('Home')}
+              className="md:hidden fixed bottom-20 left-4 right-4 bg-[#EBEBEB] border-2 border-[#111111] p-3 rounded shadow-[4px_4px_0px_#111111] z-40 flex items-center justify-between gap-3 cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <img 
+                  src={currentSong.image || 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=50'} 
+                  className="w-10 h-10 album-art-grayscale object-cover border border-[#111111]"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-bold text-[#111111] truncate">{currentSong.name}</p>
+                  <p className="text-[9px] text-[#555555] truncate">{currentSong.artist}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                <button 
+                  onClick={handlePrev} 
+                  className="text-xs font-bold bg-[#E8E8E8] border border-[#111111] px-2 py-1 active:bg-[#C0C0C0] rounded"
+                >
+                  ⏮
+                </button>
+                <button 
+                  onClick={togglePlay} 
+                  className="text-xs font-bold bg-[#E8E8E8] border border-[#111111] px-3 py-1 active:bg-[#C0C0C0] rounded"
+                >
+                  {isPlaying ? '⏸' : '▶'}
+                </button>
+                <button 
+                  onClick={handleNext} 
+                  className="text-xs font-bold bg-[#E8E8E8] border border-[#111111] px-2 py-1 active:bg-[#C0C0C0] rounded"
+                >
+                  ⏭
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* MOBILE BOTTOM NAVIGATION BAR */}
+          <div className="flex md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#EBEBEB] border-t-2 border-[#111111] items-center justify-around z-40 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            <button onClick={() => setSelectedNav('Home')} className={`flex flex-col items-center justify-center w-12 h-12 rounded cursor-pointer ${selectedNav === 'Home' ? 'text-black font-bold bg-black/5' : 'text-[#555555]'}`}>
+              <span className="text-lg">💿</span>
+              <span className="text-[8px] font-bold uppercase tracking-tighter">Home</span>
+            </button>
+            <button onClick={() => setSelectedNav('Search')} className={`flex flex-col items-center justify-center w-12 h-12 rounded cursor-pointer ${selectedNav === 'Search' ? 'text-black font-bold bg-black/5' : 'text-[#555555]'}`}>
+              <span className="text-lg">⌕</span>
+              <span className="text-[8px] font-bold uppercase tracking-tighter">Search</span>
+            </button>
+            <button onClick={() => setSelectedNav('Favorites')} className={`flex flex-col items-center justify-center w-12 h-12 rounded cursor-pointer ${selectedNav === 'Favorites' ? 'text-black font-bold bg-black/5' : 'text-[#555555]'}`}>
+              <span className="text-lg">♡</span>
+              <span className="text-[8px] font-bold uppercase tracking-tighter">Likes</span>
+            </button>
+            <button onClick={() => setSelectedNav('Songs')} className={`flex flex-col items-center justify-center w-12 h-12 rounded cursor-pointer ${selectedNav === 'Songs' ? 'text-black font-bold bg-black/5' : 'text-[#555555]'}`}>
+              <span className="text-lg">♫</span>
+              <span className="text-[8px] font-bold uppercase tracking-tighter">Queue</span>
+            </button>
+            <button onClick={() => setSelectedNav('JamRoom')} className={`flex flex-col items-center justify-center w-12 h-12 rounded cursor-pointer ${selectedNav === 'JamRoom' ? 'text-black font-bold bg-black/5' : 'text-[#555555]'}`}>
+              <span className="text-lg">👥</span>
+              <span className="text-[8px] font-bold uppercase tracking-tighter">Jam</span>
+            </button>
+            <button onClick={() => setSelectedNav('Profile')} className={`flex flex-col items-center justify-center w-12 h-12 rounded cursor-pointer ${selectedNav === 'Profile' ? 'text-black font-bold bg-black/5' : 'text-[#555555]'}`}>
+              <span className="text-lg">⚙</span>
+              <span className="text-[8px] font-bold uppercase tracking-tighter">Space</span>
+            </button>
           </div>
 
           <SpeedInsights />
