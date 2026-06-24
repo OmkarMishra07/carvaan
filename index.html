@@ -1703,6 +1703,10 @@
         if (centerPanel) centerPanel.style.display = 'flex';
         if (rightPanel) rightPanel.style.display = 'none';
         if (miniPlayer) miniPlayer.style.display = 'none';
+        
+        // Compute correct coordinates and draw immediately after panel becomes visible
+        initCanvas();
+        drawWaveform();
       } else if (tab === 'search') {
         if (centerPanel) centerPanel.style.display = 'none';
         if (rightPanel) rightPanel.style.display = 'flex';
@@ -1762,8 +1766,12 @@
     // High-DPI Canvas Initialization
     function initCanvas() {
       if (!canvas) return;
-      const dpr = window.devicePixelRatio || 1;
       const rect = canvas.getBoundingClientRect();
+      
+      // Prevent setting canvas width to 0 when element is hidden in display: none panel
+      if (rect.width === 0) return;
+      
+      const dpr = window.devicePixelRatio || 1;
       canvasWidth = rect.width;
       canvasHeight = rect.height || 40;
       
