@@ -42,11 +42,12 @@ const firebaseConfig = {
   databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL
 };
 
-// Check if keys are placeholders or not set
+// Check if keys are placeholders or not set, or if explicitly running in Demo Guest session
 export const isMockFirebase = 
   !firebaseConfig.apiKey || 
   firebaseConfig.apiKey.startsWith('mock-') || 
-  firebaseConfig.apiKey.startsWith('your-');
+  firebaseConfig.apiKey.startsWith('your-') ||
+  (typeof window !== 'undefined' && localStorage.getItem('OMusic_sessionMode') === 'mock');
 
 let app = null;
 let auth = null;

@@ -250,9 +250,17 @@ export default function App() {
       
       if (user) {
         try {
-          const likes = await UserDataService.getLikedSongs(user.uid);
-          const playlistList = await UserDataService.getPlaylists(user.uid);
-          const downloads = await UserDataService.getDownloadedSongs(user.uid);
+          let likes = await UserDataService.getLikedSongs(user.uid);
+          if (!Array.isArray(likes)) likes = [];
+          likes = likes.filter(s => s && typeof s === 'object' && s.id);
+
+          let playlistList = await UserDataService.getPlaylists(user.uid);
+          if (!Array.isArray(playlistList)) playlistList = [];
+          playlistList = playlistList.filter(p => p && typeof p === 'object' && p.id);
+
+          let downloads = await UserDataService.getDownloadedSongs(user.uid);
+          if (!Array.isArray(downloads)) downloads = [];
+          downloads = downloads.filter(d => d && typeof d === 'object' && d.id);
           
           setLikedSongs(new Set(likes.map(s => s.id)));
           setLikedSongsData(likes);
@@ -1037,9 +1045,12 @@ export default function App() {
 
   const handleGoogleLogout = async () => {
     try {
+      localStorage.removeItem('OMusic_sessionMode');
+      localStorage.removeItem('OMusic_mockUser');
       await AuthService.signOut();
       setSelectedNav('Home');
       addToast("Logged out successfully.", "info");
+      window.location.reload();
     } catch (e) {
       addToast("Logout failed.", "warning");
     }
@@ -1078,9 +1089,21 @@ export default function App() {
             </button>
 
             <button
-              onClick={async () => {
-                await AuthService.signInWithGoogle();
-                addToast("Entered as Demo Guest", "info");
+              onClick={() => {
+                try {
+                  const mockUser = {
+                    uid: 'mock_user_' + Math.random().toString(36).substr(2, 9),
+                    displayName: 'Demo Guest',
+                    email: 'guest@omusic.com',
+                    photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+                    createdAt: Date.now()
+                  };
+                  localStorage.setItem('OMusic_sessionMode', 'mock');
+                  localStorage.setItem('OMusic_mockUser', JSON.stringify(mockUser));
+                  window.location.reload();
+                } catch (err) {
+                  console.error(err);
+                }
               }}
               className="w-full bg-[#E8E8E8] hover:bg-[#D8D8D8] border-2 border-[#111111] text-[#111111] font-bold text-xs py-3 px-4 rounded shadow-[3px_3px_0px_#111111] cursor-pointer transition-all active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#111111]"
             >
