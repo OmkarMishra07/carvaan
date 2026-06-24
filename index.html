@@ -763,7 +763,10 @@
                 </div>
                 <p id="song-artist"></p>
               </div>
-              <span id="genre-tag" class="pill-black">Classic</span>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span id="genre-tag" class="pill-black">Classic</span>
+                <button id="btn-quality" onclick="toggleQuality()" style="background-color: #111111; color: #E8E8E8; border: 1px solid #111111; padding: 2px 6px; font-family: inherit; font-size: 9px; font-weight: 700; border-radius: 4px; cursor: pointer; transition: all 0.2s;" title="Toggle audio stream quality">HQ (320K)</button>
+              </div>
             </div>
           </div>
 
@@ -834,11 +837,75 @@
     const likesCache = {}; 
     let currentAlbums = []; // Store loaded albums for Browse View
 
+    let audioQuality = 'high'; // 'high' | 'standard'
+
     // Audio Element configuration
     const audio = new Audio();
     audio.crossOrigin = 'anonymous';
     audio.preload = 'auto'; // Aggressive buffering to fix stuttering/tearing
     audio.volume = 0.85; // Prevent digital clipping/tearing by providing 15% headroom
+
+    function getStreamUrl(song) {
+      if (!song || !song.downloadUrl || song.downloadUrl.length === 0) return '';
+      if (audioQuality === 'high') {
+        return song.downloadUrl[4]?.url || song.downloadUrl[song.downloadUrl.length - 1]?.url || '';
+      } else {
+        return song.downloadUrl[3]?.url || song.downloadUrl[2]?.url || song.downloadUrl[0]?.url || '';
+      }
+    }
+
+    function toggleQuality() {
+      if (audioQuality === 'high') {
+        audioQuality = 'standard';
+        addNotification('Switched to Standard Quality (160kbps)');
+      } else {
+        audioQuality = 'high';
+        addNotification('Switched to High Quality (320kbps)');
+      }
+      updateQualityButton();
+      
+      // Reload active song at current playback position
+      if (songs.length > 0 && songs[currentIndex]) {
+        const song = songs[currentIndex];
+        const currentPos = audio.currentTime;
+        const wasPlaying = isPlaying;
+        
+        const streamUrl = getStreamUrl(song);
+        audio.src = streamUrl;
+        audio.load();
+        
+        // Restore time position after load triggers metadata reset
+        audio.addEventListener('loadedmetadata', function onMetadata() {
+          audio.currentTime = currentPos;
+          audio.removeEventListener('loadedmetadata', onMetadata);
+        });
+        
+        if (wasPlaying) {
+          audio.play().then(() => {
+            setPlayingState(true);
+          }).catch(err => {
+            console.warn(err);
+            setPlayingState(false);
+          });
+        }
+      }
+    }
+
+    function updateQualityButton() {
+      const btn = document.getElementById('btn-quality');
+      if (btn) {
+        btn.textContent = audioQuality === 'high' ? 'HQ (320K)' : 'STD (160K)';
+        if (audioQuality === 'high') {
+          btn.style.backgroundColor = '#111111';
+          btn.style.borderColor = '#111111';
+          btn.style.color = '#E8E8E8';
+        } else {
+          btn.style.backgroundColor = '#E8E8E8';
+          btn.style.borderColor = '#C0C0C0';
+          btn.style.color = '#111111';
+        }
+      }
+    }
 
     // DOM Elements
     const canvas = document.getElementById('waveform');
@@ -1050,7 +1117,7 @@
       tag.style.display = activeCategory ? 'inline-block' : 'none';
 
       // Set Audio stream
-      const streamUrl = song.downloadUrl?.[4]?.url || song.downloadUrl?.[0]?.url || '';
+      const streamUrl = getStreamUrl(song);
       audio.pause(); // Flush current decoder buffers
       audio.src = streamUrl;
       audio.load(); // Aggressively load new stream resources
